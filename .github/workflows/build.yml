@@ -6,34 +6,59 @@ on:
       - main
 
 env:
-  IMAGE_NAME: MicroTodo-UI
+  IMAGE_NAME: microtodo-ui
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout Repository
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
+      # Debug Repository
+      - name: Show Repository Files
+        run: |
+          echo "Current Directory:"
+          pwd
+          echo "Repository Files:"
+          ls -la
+          echo "Searching Dockerfile..."
+          find . -name "Dockerfile"
+
+      # Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Build Docker Image
       - name: Build Docker Image
         run: |
           docker build \
+            -f Dockerfile \
             -t ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.run_number }} \
-            -t ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest .
+            -t ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest \
+            .
 
+      # Verify Image
+      - name: List Docker Images
+        run: docker images
+
+      # Push Image
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.run_number }}
           docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
 
+      # Success Message
       - name: Image Details
         run: |
-          echo "Image pushed successfully"
-          echo "Image: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.run_number }}"
+          echo "======================================"
+          echo "Image pushed successfully 🚀"
+          echo "Image:"
+          echo "${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.run_number }}"
+          echo "${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest"
+          echo "======================================"
